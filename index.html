@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBF Tech - Data Converter</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/barcodes/JsBarcode.code128.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1400px;
+            overflow: hidden;
+            height: 95vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header Styling - SIMPLIFIED */
+        .header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 16px 32px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+        
+        .branding {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .brand-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .brand-subtitle {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: #c5cae9;
+        }
+        
+        .header h1 {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+            color: #e8eaf6;
+        }
+        
+        /* Main Content Layout - EQUAL COLUMNS */
+        .main-content {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+        
+        /* Equal Column Sizing */
+        .left-column, .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+            overflow-y: auto;
+            height: 100%;
+        }
+        
+        /* Card Design - COMPACT */
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e1e8f0;
+            padding: 18px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            height: fit-content;
+            min-height: fit-content;
+        }
+        
+        /* Make sections more compact */
+        .input-section {
+            border-top: 4px solid #1a237e;
+            background: linear-gradient(to bottom, #f8fafc, #ffffff);
+            position: relative;
+        }
+        
+        .price-section {
+            border-top: 4px solid #4caf50;
+            background: linear-gradient(to bottom, #f1f8e9, #ffffff);
+        }
+        
+        .barcode-section {
+            border-top: 4px solid #ff9800;
+            background: linear-gradient(to bottom, #fff8e1, #ffffff);
+        }
+        
+        .combined-barcode-section {
+            border-top: 4px solid #9c27b0;
+            background: linear-gradient(to bottom, #f3e5f5, #ffffff);
+            width: 100%;
+        }
+        
+        /* Input Section Styling - COMPACT with VISIBLE HIGHLIGHTS */
+        .input-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 0.85rem;
+            background: linear-gradient(to right, #f8fafc, transparent);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border-left: 3px solid #1a237e;
+        }
+        
+        .input-with-icon {
+            position: relative;
+            width: 100%;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+            font-size: 1.1rem;
+            z-index: 2;
+        }
+        
+        .input-field, .shop-select {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: white;
+            color: #1a202c;
+            outline: none;
+            appearance: none;
+            cursor: pointer;
+        }
+        
+        .shop-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2364748b' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+        
+        /* Date input special styling */
+        input[type="date"].input-field {
+            padding-left: 14px;
+        }
+        
+        input[type="date"].input-field + .input-icon {
+            left: auto;
+            right: 12px;
+        }
+        
+        /* Blinking border animation for important inputs */
+        .input-field:focus, .shop-select:focus {
+            border-color: #1a237e;
+            box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+            animation: pulse-border 2s infinite;
+        }
+        
+        .required-field {
+            border: 2px solid #ff9800 !important;
+            animation: blink-border 1.5s infinite !important;
+        }
+        
+        @keyframes pulse-border {
+            0% {
+                box-shadow: 0 0 0 0 rgba(26, 35, 126, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(26, 35, 126, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(26, 35, 126, 0);
+            }
+        }
+        
+        @keyframes blink-border {
+            0%, 100% {
+                border-color: #ff9800;
+            }
+            50% {
+                border-color: #ffc107;
+            }
+        }
+        
+        .validation-container {
+            margin-top: 10px;
+        }
+        
+        .validation-message {
+            font-size: 0.8rem;
+            padding: 10px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Button Group - COMPACT */
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #283593 0%, #1a237e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+            transform: translateY(-2px);
+        }
+        
+        /* Export Button */
+        .export-btn {
+            background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%);
+            color: white;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        .export-btn:hover {
+            background: linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+        }
+        
+        /* Section Titles - COMPACT */
+        .section-title {
+            color: #2d3748;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        
+        .section-title .title-icon {
+            background: linear-gradient(135deg, currentColor, currentColor);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        /* Result Display - COMPACT (Now inside input section) */
+        .result-container {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e1f5fe 100%);
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #bbdefb;
+            margin-top: 15px;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .result-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1565c0;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        
+        .conversion-type-badge {
+            background: #1565c0;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .result-value {
+            font-size: 1.2rem;
+            color: #1a237e;
+            word-break: break-all;
+            padding: 15px;
+            font-weight: 700;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #90caf9;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .conversion-direction {
+            font-size: 0.8rem;
+            color: #546e7a;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #bbdefb;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            justify-content: center;
+        }
+        
+        /* Price Calculator - COMPACT */
+        .price-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .price-result {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #f1f5f9;
+            text-align: center;
+        }
+        
+        .price-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .price-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1a237e;
+        }
+        
+        /* Taka symbol specific styling */
+        .taka-symbol {
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            margin-right: 2px;
+        }
+        
+        .discount-inputs {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #f1f5f9;
+            margin-top: 12px;
+        }
+        
+        .discount-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .discount-input-group {
+            position: relative;
+        }
+        
+        .discount-input {
+            width: 80px;
+            padding: 10px 10px 10px 35px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: center;
+            font-weight: 600;
+            animation: pulse-border 2s infinite;
+        }
+        
+        .discount-input:focus {
+            border-color: #4caf50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .discount-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #4caf50;
+            font-size: 1rem;
+        }
+        
+        .discount-btn, .reset-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.85rem;
+            min-width: 80px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .discount-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+        }
+        
+        .discount-btn:hover {
+            background: linear-gradient(135deg, #45a049 0%, #4caf50 100%);
+            transform: translateY(-2px);
+        }
+        
+        .reset-btn {
+            background: linear-gradient(135deg, #ff9800 0%, #fb8c00 100%);
+            color: white;
+        }
+        
+        .reset-btn:hover {
+            background: linear-gradient(135deg, #fb8c00 0%, #ff9800 100%);
+            transform: translateY(-2px);
+        }
+        
+        .price-info {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
+            line-height: 1.5;
+        }
+        
+        /* Individual Barcodes - SIDE BY SIDE with CENTERED BARCODES */
+        .barcode-container {
+            display: grid;
+            grid-template-columns: 1fr 50px 1fr; /* 50px gap in the middle */
+            gap: 0;
+            margin-top: 10px;
+            align-items: start;
+        }
+        
+        .barcode-box {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid #f1f5f9;
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .barcode-gap {
+            width: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .gap-arrow {
+            color: #64748b;
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+        
+        .barcode-label {
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        /* CENTERED BARCODE STYLING */
+        .barcode-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            margin: 12px 0;
+            padding: 8px;
+            background: white;
+            min-height: 60px;
+        }
+        
+        .barcode {
+            display: block;
+            margin: 0 auto;
+            background: white;
+            height: 60px;
+        }
+        
+        .barcode-text {
+            margin-top: 10px;
+            color: #2d3748;
+            font-size: 0.85rem;
+            word-break: break-all;
+            font-weight: 500;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            letter-spacing: 1px;
+            border: 1px solid #e2e8f0;
+            font-family: 'Courier New', monospace;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        /* Combined Barcode - COMPACT with VISIBLE PARTS and PERFECTLY CENTERED BARCODE */
+        .combined-barcode-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .combined-barcode-parts {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px dashed #e2e8f0;
+            text-align: center;
+        }
+        
+        .part-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .part-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .part-label {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            justify-content: center;
+        }
+        
+        .part-value {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1a237e;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            word-break: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* PERFECTLY CENTERED COMBINED BARCODE */
+        .combined-barcode-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
+            padding: 10px;
+            background: white;
+            height: 80px;
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .combined-barcode {
+            display: block;
+            margin: 0 auto;
+            background: white;
+            height: 80px;
+            max-width: 100%;
+        }
+        
+        /* Ensure the barcode box container is also centered */
+        .combined-barcode-parts .barcode-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .combined-barcode-parts .barcode-label {
+            justify-content: center;
+        }
+        
+        .combined-barcode-text {
+            margin-top: 12px;
+            color: #2d3748;
+            font-size: 0.82rem;
+            word-break: break-all;
+            font-weight: 600;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            letter-spacing: 1px;
+            border: 2px solid #e2e8f0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.3;
+            max-height: 80px;
+            overflow-y: auto;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .format-info {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 6px;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        /* Product number label for exported barcodes */
+        .barcode-product-label {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1a237e;
+            text-align: center;
+            padding: 5px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            display: none; /* Hidden by default, shown in exported version */
+        }
+        
+        /* Export container for proper layout */
+        .barcode-export-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Highlight important sections */
+        .input-highlight {
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #ff9800;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 10;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 152, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+            }
+        }
+        
+        /* Info badge for max discount */
+        .max-discount-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #e3f2fd;
+            color: #1565c0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+            border: 1px solid #bbdefb;
+        }
+        
+        /* Scrollbar Styling */
+        .left-column::-webkit-scrollbar,
+        .right-column::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .left-column::-webkit-scrollbar-track,
+        .right-column::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        
+        .left-column::-webkit-scrollbar-thumb,
+        .right-column::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .left-column::-webkit-scrollbar-thumb:hover,
+        .right-column::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Combined barcode text scrollbar */
+        .combined-barcode-text::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .combined-barcode-text::-webkit-scrollbar-track {
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+        
+        .combined-barcode-text::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 2px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .container {
+                height: auto;
+                max-height: 95vh;
+            }
+            
+            .left-column, .right-column {
+                height: auto;
+                max-height: 50vh;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .barcode-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .barcode-gap {
+                display: none;
+            }
+            
+            .gap-arrow {
+                transform: rotate(90deg);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                height: 95vh;
+            }
+            
+            .main-content {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .header {
+                padding: 12px 20px;
+            }
+            
+            .brand-name {
+                font-size: 1.4rem;
+            }
+            
+            .header h1 {
+                font-size: 1rem;
+            }
+            
+            .section-card {
+                padding: 15px;
+            }
+            
+            .price-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .part-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .discount-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .discount-input, .discount-btn, .reset-btn {
+                width: 100%;
+                min-width: auto;
+            }
+            
+            .input-highlight {
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.7rem;
+                padding: 3px 8px;
+            }
+            
+            .input-field, .shop-select {
+                padding-left: 36px;
+            }
+            
+            .result-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            
+            .conversion-type-badge {
+                align-self: flex-end;
+            }
+            
+            .barcode-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .barcode-gap {
+                display: none;
+            }
+            
+            .combined-barcode-wrapper {
+                margin: 10px auto;
+                height: 70px;
+            }
+            
+            .combined-barcode {
+                height: 70px;
+            }
+            
+            .combined-barcode-text {
+                font-size: 0.75rem;
+                padding: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 15px;
+            }
+            
+            .main-content {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .section-card {
+                padding: 12px;
+            }
+            
+            .brand-name {
+                font-size: 1.2rem;
+            }
+            
+            .input-field, .shop-select {
+                padding: 10px 12px 10px 32px;
+                font-size: 0.85rem;
+            }
+            
+            .input-icon {
+                font-size: 0.9rem;
+                left: 10px;
+            }
+            
+            .btn {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .export-btn {
+                padding: 6px 10px;
+                font-size: 0.75rem;
+            }
+            
+            .result-value {
+                font-size: 1rem;
+                padding: 12px;
+            }
+            
+            .barcode-box {
+                padding: 12px;
+            }
+            
+            .barcode-label {
+                font-size: 0.8rem;
+            }
+            
+            .barcode-text {
+                font-size: 0.75rem;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div class="container">
+        <!-- Header - SIMPLIFIED -->
+        <div class="header">
+            <div class="branding">
+                <div class="brand-name">FBF TECH</div>
+                <div class="brand-subtitle">DATA CONVERSION SYSTEM</div>
+            </div>
+            <h1>Data Converter with 5-Part Barcode</h1>
+        </div>
+        
+        <!-- Main Content - EQUAL COLUMNS -->
+        <div class="main-content">
+            <!-- Left Column -->
+            <div class="left-column">
+                <!-- Input Section (Now includes Conversion Result) -->
+                <div class="section-card input-section">
+                    <div class="input-highlight">ENTER DATA HERE</div>
+                    <div class="section-title">
+                        <div class="title-icon">📥</div>
+                        <span>Input Configuration</span>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span class="label-icon">🏷️</span>
+                                <span>Product Number</span>
+                            </label>
+                            <div class="input-with-icon">
+                                <div class="input-icon">📦</div>
+                                <input type="text" id="productNumber" class="input-field" 
+                                       placeholder="PROD_YYYYMMDD_000|" 
+                                       maxlength="25">
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span class="label-icon">🏪</span>
+                                <span>Provider Shop</span>
+                            </label>
+                            <div class="input-with-icon">
+                                <div class="input-icon">🏬</div>
+                                <select id="providerShop" class="shop-select">
+                                    <option value="SHOP001">SHOP001</option>
+                                    <option value="IT CARE (PIASH BHI)">IT CARE (PIASH BHI)</option>
+                                    <option value="FA COMPUTER (FORHAD BHI)">FA COMPUTER (FORHAD BHI)</option>
+                                    <option value="OVO DHAKA">OVO DHAKA</option>
+                                    <option value="DHAKA IT HOUSE">DHAKA IT HOUSE</option>
+                                    <option value="CUSTOM">Custom Shop Name...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span class="label-icon">📅</span>
+                                <span>Buying Date</span>
+                            </label>
+                            <div class="input-with-icon">
+                                <input type="date" id="buyingDate" class="input-field">
+                                <div class="input-icon">📅</div>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span class="label-icon">🎯</span>
+                                <span>Max Discount (%)</span>
+                                <span class="max-discount-badge">Default: 0%</span>
+                            </label>
+                            <div class="input-with-icon">
+                                <div class="input-icon">💰</div>
+                                <input type="number" id="maxDiscount" class="input-field" 
+                                       placeholder="0" 
+                                       min="0" 
+                                       max="100" 
+                                       step="1"
+                                       value="0">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label class="input-label">
+                                <span class="label-icon">🔢</span>
+                                <span>Data to Convert (Required)</span>
+                            </label>
+                            <div class="input-with-icon">
+                                <div class="input-icon">✏️</div>
+                                <input type="text" id="inputText" class="input-field required-field" 
+                                       placeholder="Enter letters or numbers only" 
+                                       autocomplete="off"
+                                       autocapitalize="characters"
+                                       maxlength="50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="validation-container">
+                        <div id="validationMessage" class="validation-message">
+                            <span class="icon">ℹ️</span>
+                            <span>Enter either all letters (F,G,H,I,J,K,L,M,N,O,X) or all numbers (0-9)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="convertBtn" disabled>
+                            <span>Convert & Calculate</span>
+                            <span>🚀</span>
+                        </button>
+                        <button class="btn btn-secondary" id="clearBtn">
+                            <span>Clear All</span>
+                            <span>🗑️</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Conversion Result Section - Now inside input section -->
+                    <div class="result-container">
+                        <div class="result-header">
+                            <div class="result-title">
+                                <span>📋</span>
+                                <span>Conversion Result</span>
+                            </div>
+                            <div id="conversionType" class="conversion-type-badge">Letters → Numbers</div>
+                        </div>
+                        
+                        <div id="convertedResult" class="result-value">Enter data to convert</div>
+                        
+                        <div class="conversion-direction">
+                            <span>↔️</span>
+                            <span id="conversionDirection">Waiting for input</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="right-column">
+                <!-- Price Calculator -->
+                <div class="section-card price-section">
+                    <div class="section-title">
+                        <div class="title-icon">💰</div>
+                        <span>Price Calculator</span>
+                    </div>
+                    
+                    <div class="price-grid">
+                        <div class="price-result">
+                            <div class="price-label">Base Price</div>
+                            <div id="basePrice" class="price-value"><span class="taka-symbol">৳</span>0.00</div>
+                        </div>
+                        
+                        <div class="price-result">
+                            <div class="price-label">Discount %</div>
+                            <div id="discountPercent" class="price-value">0%</div>
+                        </div>
+                        
+                        <div class="price-result">
+                            <div class="price-label">Discount Amount</div>
+                            <div id="discountAmount" class="price-value"><span class="taka-symbol">৳</span>0.00</div>
+                        </div>
+                        
+                        <div class="price-result">
+                            <div class="price-label">Final Price</div>
+                            <div id="finalPrice" class="price-value"><span class="taka-symbol">৳</span>0.00</div>
+                        </div>
+                    </div>
+                    
+                    <div class="discount-inputs">
+                        <div class="discount-controls">
+                            <span style="font-weight:600;color:#475569;font-size:0.85rem;">Apply Discount (0-100%):</span>
+                            <div class="discount-input-group">
+                                <div class="discount-icon">%</div>
+                                <input type="number" id="discountInput" class="discount-input" 
+                                       placeholder="%" 
+                                       min="0" 
+                                       max="100" 
+                                       step="1">
+                            </div>
+                            <button id="applyDiscount" class="discount-btn">
+                                <span>Apply</span>
+                                <span>✅</span>
+                            </button>
+                            <button id="resetDiscount" class="reset-btn">
+                                <span>Reset to 0%</span>
+                                <span>↩️</span>
+                            </button>
+                        </div>
+                        
+                        <div class="price-info">
+                            <div id="priceSource">💰 Price automatically calculated from converted data</div>
+                            <div id="discountNote" style="margin-top:6px;">🎯 Current discount: <strong>0% (default)</strong></div>
+                            <div id="maxDiscountInfo" style="margin-top:6px;color:#1565c0;">📊 Maximum allowed: <strong id="currentMaxDiscountValue">0%</strong> (set in Max Discount field)</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Individual Barcodes - SIDE BY SIDE -->
+                <div class="section-card barcode-section">
+                    <div class="section-title">
+                        <div class="title-icon">📊</div>
+                        <span>Individual Barcodes</span>
+                    </div>
+                    
+                    <div class="barcode-container">
+                        <!-- Original Data -->
+                        <div class="barcode-box">
+                            <div class="barcode-label">
+                                <span>📥</span>
+                                <span>Original Data</span>
+                            </div>
+                            <div class="barcode-wrapper">
+                                <svg id="barcodeInput" class="barcode"></svg>
+                            </div>
+                            <div class="barcode-product-label" id="originalProductLabel">Product: Not set</div>
+                            <div id="barcodeInputText" class="barcode-text">Waiting for input</div>
+                            <button id="exportOriginalBtn" class="export-btn" disabled>
+                                <span>Export Original Barcode</span>
+                                <span>💾</span>
+                            </button>
+                        </div>
+                        
+                        <!-- 50px Gap with Arrow -->
+                        <div class="barcode-gap">
+                            <div class="gap-arrow">➡️</div>
+                        </div>
+                        
+                        <!-- Converted Result -->
+                        <div class="barcode-box">
+                            <div class="barcode-label">
+                                <span>🔄</span>
+                                <span>Converted Result</span>
+                            </div>
+                            <div class="barcode-wrapper">
+                                <svg id="barcodeResult" class="barcode"></svg>
+                            </div>
+                            <div class="barcode-product-label" id="convertedProductLabel">Product: Not set</div>
+                            <div id="barcodeResultText" class="barcode-text">Converted data will appear here</div>
+                            <button id="exportConvertedBtn" class="export-btn" disabled>
+                                <span>Export Converted Barcode</span>
+                                <span>💾</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Combined 5-Part Barcode - VISIBLE PARTS -->
+                <div class="section-card combined-barcode-section">
+                    <div class="section-title">
+                        <div class="title-icon">🔗</div>
+                        <span>Combined 5-Part Barcode</span>
+                    </div>
+                    
+                    <div class="combined-barcode-container">
+                        <div class="combined-barcode-parts">
+                            <div class="part-list">
+                                <div class="part-item">
+                                    <div class="part-label">
+                                        <span>1️⃣</span>
+                                        <span>Product Number</span>
+                                    </div>
+                                    <div id="part1Product" class="part-value">Not set</div>
+                                </div>
+                                
+                                <div class="part-item">
+                                    <div class="part-label">
+                                        <span>2️⃣</span>
+                                        <span>Price</span>
+                                    </div>
+                                    <div id="part2Price" class="part-value"><span class="taka-symbol">৳</span>0.00</div>
+                                </div>
+                                
+                                <div class="part-item">
+                                    <div class="part-label">
+                                        <span>3️⃣</span>
+                                        <span>Shop Name</span>
+                                    </div>
+                                    <div id="part3Shop" class="part-value">Not set</div>
+                                </div>
+                                
+                                <div class="part-item">
+                                    <div class="part-label">
+                                        <span>4️⃣</span>
+                                        <span>Date</span>
+                                    </div>
+                                    <div id="part4Date" class="part-value">Not set</div>
+                                </div>
+                                
+                                <div class="part-item">
+                                    <div class="part-label">
+                                        <span>5️⃣</span>
+                                        <span>Max Discount</span>
+                                    </div>
+                                    <div id="part5MaxDiscount" class="part-value">0%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="barcode-box">
+                                <div class="barcode-label">
+                                    <span>📦</span>
+                                    <span>Combined Data (5 parts separated by **)</span>
+                                </div>
+                                <div class="combined-barcode-wrapper">
+                                    <svg id="combinedBarcode" class="combined-barcode"></svg>
+                                </div>
+                                <div class="barcode-product-label" id="combinedProductLabel">Product: Not set</div>
+                                <div id="combinedBarcodeText" class="combined-barcode-text">Fill all fields to generate combined barcode</div>
+                                <button id="exportCombinedBtn" class="export-btn" disabled>
+                                    <span>Export Combined Barcode</span>
+                                    <span>💾</span>
+                                </button>
+                                <div class="format-info">Format: PRODUCT**PRICE**SHOP**DATE**MAXDISCOUNT</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Allowed characters sets
+        const allowedLetters = new Set(['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'X']);
+        const allowedNumbers = new Set(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']);
+        
+        // Complete mapping configuration
+        const letterToNumber = {
+            'F': '1', 'G': '2', 'H': '3', 'I': '4', 'J': '5',
+            'K': '6', 'L': '7', 'M': '8', 'N': '9', 'O': '0', 'X': '0'
+        };
+        
+        const numberToLetter = {
+            '1': 'F', '2': 'G', '3': 'H', '4': 'I', '5': 'J',
+            '6': 'K', '7': 'L', '8': 'M', '9': 'N', '0': 'X'
+        };
+        
+        // DOM Elements
+        const elements = {
+            inputText: document.getElementById('inputText'),
+            productNumber: document.getElementById('productNumber'),
+            providerShop: document.getElementById('providerShop'),
+            buyingDate: document.getElementById('buyingDate'),
+            maxDiscount: document.getElementById('maxDiscount'),
+            discountInput: document.getElementById('discountInput'),
+            applyDiscountBtn: document.getElementById('applyDiscount'),
+            resetDiscountBtn: document.getElementById('resetDiscount'),
+            convertBtn: document.getElementById('convertBtn'),
+            clearBtn: document.getElementById('clearBtn'),
+            convertedResult: document.getElementById('convertedResult'),
+            conversionType: document.getElementById('conversionType'),
+            conversionDirection: document.getElementById('conversionDirection'),
+            barcodeInput: document.getElementById('barcodeInput'),
+            barcodeResult: document.getElementById('barcodeResult'),
+            combinedBarcode: document.getElementById('combinedBarcode'),
+            barcodeInputText: document.getElementById('barcodeInputText'),
+            barcodeResultText: document.getElementById('barcodeResultText'),
+            combinedBarcodeText: document.getElementById('combinedBarcodeText'),
+            validationMessage: document.getElementById('validationMessage'),
+            priceSource: document.getElementById('priceSource'),
+            discountNote: document.getElementById('discountNote'),
+            maxDiscountInfo: document.getElementById('currentMaxDiscountValue'),
+            exportOriginalBtn: document.getElementById('exportOriginalBtn'),
+            exportConvertedBtn: document.getElementById('exportConvertedBtn'),
+            exportCombinedBtn: document.getElementById('exportCombinedBtn'),
+            originalProductLabel: document.getElementById('originalProductLabel'),
+            convertedProductLabel: document.getElementById('convertedProductLabel'),
+            combinedProductLabel: document.getElementById('combinedProductLabel'),
+            
+            // 5-Part barcode elements
+            part1Product: document.getElementById('part1Product'),
+            part2Price: document.getElementById('part2Price'),
+            part3Shop: document.getElementById('part3Shop'),
+            part4Date: document.getElementById('part4Date'),
+            part5MaxDiscount: document.getElementById('part5MaxDiscount'),
+            
+            // Price elements
+            basePriceElement: document.getElementById('basePrice'),
+            discountPercentElement: document.getElementById('discountPercent'),
+            discountAmountElement: document.getElementById('discountAmount'),
+            finalPriceElement: document.getElementById('finalPrice')
+        };
+        
+        // State management
+        const state = {
+            currentDiscount: 0,
+            currentConvertedValue: null,
+            currentBasePrice: 0,
+            currentMaxDiscount: 0, // Default to 0%
+            currentConversionType: '',
+            originalData: '',
+            convertedData: '',
+            combinedData: ''
+        };
+        
+        // Function to get formatted date for product number (PROD_YYYYMMDD_001|)
+        function getProductNumberWithDateAndSerial() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            
+            // Start with serial 001 (FIXED, won't auto-increment)
+            const serialFormatted = '001';
+            
+            return `PROD_${year}${month}${day}_${serialFormatted}|`;
+        }
+        
+        // Handle shop selection changes
+        function handleShopChange() {
+            const shopSelect = elements.providerShop;
+            if (shopSelect.value === 'CUSTOM') {
+                // Replace select with input for custom shop name
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'shop-select';
+                input.id = 'providerShop';
+                input.placeholder = 'Enter custom shop name';
+                input.value = '';
+                input.maxLength = 50;
+                
+                // Replace the select with input
+                shopSelect.parentNode.replaceChild(input, shopSelect);
+                
+                // Update the elements reference
+                elements.providerShop = input;
+                
+                // Add event listener to the new input
+                input.addEventListener('input', () => {
+                    updateProductLabels();
+                    if (state.currentConvertedValue) {
+                        updateCombinedBarcodeDisplay();
+                    }
+                });
+                
+                // Focus on the new input
+                setTimeout(() => input.focus(), 100);
+            }
+        }
+        
+        // Function to validate input - SINGLE TYPE ONLY
+        function validateInput(input) {
+            if (!input || input.trim() === '') {
+                return { 
+                    isValid: false, 
+                    type: 'empty',
+                    message: "Please enter data to convert"
+                };
+            }
+            
+            const upperInput = input.toUpperCase();
+            const chars = upperInput.split('');
+            
+            // Check for invalid characters
+            for (let char of chars) {
+                if (!allowedLetters.has(char) && !allowedNumbers.has(char)) {
+                    return { 
+                        isValid: false, 
+                        type: 'invalid',
+                        message: `Invalid character: "${char}". Only F,G,H,I,J,K,L,M,N,O,X,0-9 allowed.`
+                    };
+                }
+            }
+            
+            // Check if all characters are letters
+            let allLetters = chars.every(char => allowedLetters.has(char));
+            
+            // Check if all characters are numbers
+            let allNumbers = chars.every(char => allowedNumbers.has(char));
+            
+            // Check for mixed content
+            if (!allLetters && !allNumbers) {
+                return { 
+                    isValid: false, 
+                    type: 'mixed',
+                    message: "Mixed content not allowed. Use either all letters or all numbers."
+                };
+            }
+            
+            // Valid input - determine type
+            if (allLetters) {
+                return { 
+                    isValid: true, 
+                    type: 'letters',
+                    message: "✓ Valid letter format detected"
+                };
+            } else {
+                return { 
+                    isValid: true, 
+                    type: 'numbers',
+                    message: "✓ Valid number format detected"
+                };
+            }
+        }
+        
+        // Process conversion - handles both directions
+        function processConversion(input, type) {
+            const upperInput = input.toUpperCase();
+            let result = '';
+            let conversionType = '';
+            
+            if (type === 'letters') {
+                // Convert letters to numbers
+                result = upperInput.split('').map(char => letterToNumber[char] || char).join('');
+                conversionType = 'Letters → Numbers';
+            } else {
+                // Convert numbers to letters
+                result = upperInput.split('').map(char => numberToLetter[char] || char).join('');
+                conversionType = 'Numbers → Letters';
+            }
+            
+            return { result, conversionType };
+        }
+        
+        // Convert numeric string to price format (UPDATED: Allow up to 8 digits)
+        function formatPrice(numericString) {
+            let numericValue = parseInt(numericString) || 0;
+            
+            // Cap at 8 digits (up to 99,999,999)
+            if (numericValue > 99999999) {
+                numericValue = numericValue % 100000000;
+            }
+            
+            // Ensure minimum price
+            if (numericValue === 0) {
+                numericValue = 1;
+            }
+            
+            return numericValue;
+        }
+        
+        // Format date for barcode
+        function formatDateForBarcode(dateString) {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "INVALID_DATE";
+            
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+        
+        // Helper function to format date-time for filename
+        function formatDateTimeForFilename(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            
+            return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+        }
+        
+        // Enhanced function to export SVG with product number label BELOW barcode
+        function exportSVG(svgElement, fileName, barcodeType) {
+            if (!svgElement || svgElement.innerHTML.trim() === '') {
+                alert("No barcode to export. Please generate a barcode first.");
+                return;
+            }
+            
+            // Get current product number
+            const productNumber = elements.productNumber.value || 'UNKNOWN';
+            
+            // Get current date and time for filename
+            const now = new Date();
+            const dateTimeString = formatDateTimeForFilename(now);
+            
+            // Add date-time to filename
+            const fileNameWithDateTime = `${fileName}_${dateTimeString}`;
+            
+            // Clone the SVG
+            const svgClone = svgElement.cloneNode(true);
+            
+            // Create a container with barcode on top and product number centered below
+            const containerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; padding: 30px; background: white; min-width: 400px;">
+                    <!-- Barcode -->
+                    ${svgClone.outerHTML}
+                    
+                    <!-- Line break -->
+                    <div style="height: 20px;"></div>
+                    
+                    <!-- Product number centered below barcode (SHOW ONLY THE NUMBER PART) -->
+                    <div style="margin-top: 15px; font-size: 16px; font-weight: bold; color: #1a237e; 
+                         text-align: center; padding: 12px 20px; background: #f8fafc; border-radius: 8px; 
+                         border: 2px solid #e2e8f0; width: 100%; box-sizing: border-box; text-align: center;">
+                        ${productNumber}
+                    </div>
+                </div>
+            `;
+            
+            // Create a blob with the HTML data
+            const blob = new Blob([containerHTML], { type: 'image/svg+xml' });
+            
+            // Create a download link
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${fileNameWithDateTime}.svg`;
+            
+            // Trigger the download
+            document.body.appendChild(link);
+            link.click();
+            
+            // Clean up
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Create combined barcode string (5 parts) - UPDATED: Remove ৳ symbol from barcode
+        function createCombinedBarcodeString(productNum, price, shop, date, maxDiscount) {
+            const formattedProduct = productNum || 'NOPROD';
+            // Remove ৳ symbol and keep only the numeric value
+            const formattedPrice = price.replace('৳', '').replace('.00', '');
+            const formattedShop = shop || 'NOSHOP';
+            const formattedDate = formatDateForBarcode(date);
+            const formattedMaxDiscount = maxDiscount.replace('%', '');
+            
+            return `${formattedProduct}**${formattedPrice}**${formattedShop}**${formattedDate}**${formattedMaxDiscount}`;
+        }
+        
+        // Calculate prices - UPDATED: Format with ৳ symbol
+        function calculatePrices(basePrice, discountPercent) {
+            const discountAmount = (basePrice * discountPercent) / 100;
+            const finalPrice = basePrice - discountAmount;
+            
+            return {
+                basePrice: basePrice.toFixed(2),
+                discountPercent: discountPercent.toFixed(0),
+                discountAmount: discountAmount.toFixed(2),
+                finalPrice: finalPrice.toFixed(2)
+            };
+        }
+        
+        // Update price display - UPDATED: Show ৳ symbol
+        function updatePriceDisplay() {
+            const prices = calculatePrices(state.currentBasePrice, state.currentDiscount);
+            
+            // Update with ৳ symbol
+            elements.basePriceElement.innerHTML = `<span class="taka-symbol">৳</span>${prices.basePrice}`;
+            elements.discountPercentElement.textContent = `${prices.discountPercent}%`;
+            elements.discountAmountElement.innerHTML = `<span class="taka-symbol">৳</span>${prices.discountAmount}`;
+            elements.finalPriceElement.innerHTML = `<span class="taka-symbol">৳</span>${prices.finalPrice}`;
+            
+            // Update info text
+            if (state.currentConvertedValue) {
+                const numericValue = parseInt(state.currentConvertedValue) || 0;
+                elements.priceSource.textContent = `💰 Price calculated from converted value: ${numericValue}`;
+                elements.discountNote.innerHTML = `🎯 Current discount: <strong>${state.currentDiscount}%</strong> ${state.currentDiscount === 0 ? '(default)' : ''}`;
+            }
+            
+            elements.maxDiscountInfo.textContent = `${state.currentMaxDiscount}%`;
+            
+            // Update part2Price in combined barcode section
+            elements.part2Price.innerHTML = `<span class="taka-symbol">৳</span>${prices.basePrice}`;
+        }
+        
+        // Update product labels in UI
+        function updateProductLabels() {
+            const productNumber = elements.productNumber.value || 'Not set';
+            
+            // Update product labels (SHOW ONLY THE NUMBER PART)
+            if (elements.originalProductLabel) elements.originalProductLabel.textContent = `${productNumber}`;
+            if (elements.convertedProductLabel) elements.convertedProductLabel.textContent = `${productNumber}`;
+            if (elements.combinedProductLabel) elements.combinedProductLabel.textContent = `${productNumber}`;
+        }
+        
+        // Update combined barcode display
+        function updateCombinedBarcodeDisplay() {
+            // Update part displays
+            elements.part1Product.textContent = elements.productNumber.value || 'Not set';
+            // part2Price is updated in updatePriceDisplay()
+            elements.part3Shop.textContent = elements.providerShop.value || 'Not set';
+            elements.part4Date.textContent = elements.buyingDate.value || 'Not set';
+            elements.part5MaxDiscount.textContent = `${state.currentMaxDiscount}%`;
+            
+            // Create and display combined barcode
+            if (state.currentBasePrice > 0 && elements.productNumber.value && elements.providerShop.value && elements.buyingDate.value) {
+                const combinedString = createCombinedBarcodeString(
+                    elements.productNumber.value,
+                    `৳${state.currentBasePrice.toFixed(2)}`,
+                    elements.providerShop.value,
+                    elements.buyingDate.value,
+                    `${state.currentMaxDiscount}%`
+                );
+                
+                elements.combinedBarcodeText.textContent = combinedString;
+                state.combinedData = combinedString;
+                
+                // Generate centered barcode
+                try {
+                    JsBarcode(elements.combinedBarcode, combinedString, {
+                        format: "CODE128",
+                        lineColor: "#000000",
+                        width: 2,
+                        height: 80,
+                        displayValue: false,
+                        margin: 10,
+                        background: "#ffffff",
+                        textAlign: "center"
+                    });
+                    elements.exportCombinedBtn.disabled = false;
+                } catch(e) {
+                    console.error("Barcode error:", e);
+                    elements.exportCombinedBtn.disabled = true;
+                }
+            } else {
+                elements.exportCombinedBtn.disabled = true;
+            }
+        }
+        
+        // Generate centered barcode
+        function generateBarcode(element, text, type) {
+            if (!text || text.includes('Waiting') || text.includes('Converted data')) {
+                element.innerHTML = '';
+                return false;
+            }
+            
+            try {
+                JsBarcode(element, text, {
+                    format: "CODE128",
+                    lineColor: "#000000",
+                    width: 2,
+                    height: 60,
+                    displayValue: false,
+                    margin: 8,
+                    background: "#ffffff",
+                    textAlign: "center"
+                });
+                
+                // Enable export buttons if barcode was generated
+                if (type === 'original') {
+                    elements.exportOriginalBtn.disabled = false;
+                } else if (type === 'converted') {
+                    elements.exportConvertedBtn.disabled = false;
+                }
+                
+                return true;
+            } catch(e) {
+                // Disable export buttons if barcode generation failed
+                if (type === 'original') {
+                    elements.exportOriginalBtn.disabled = true;
+                } else if (type === 'converted') {
+                    elements.exportConvertedBtn.disabled = true;
+                }
+                return false;
+            }
+        }
+        
+        // Update UI based on validation
+        function updateValidationUI(validation) {
+            elements.inputText.classList.remove('valid-letters', 'valid-numbers', 'invalid');
+            elements.validationMessage.classList.remove('valid-letters', 'valid-numbers', 'invalid');
+            
+            if (validation.isValid) {
+                if (validation.type === 'letters') {
+                    elements.inputText.classList.add('valid-letters');
+                    elements.validationMessage.innerHTML = `<span class="icon">✓</span><span>${validation.message} → Will convert to numbers</span>`;
+                    elements.validationMessage.classList.add('valid-letters');
+                } else {
+                    elements.inputText.classList.add('valid-numbers');
+                    elements.validationMessage.innerHTML = `<span class="icon">✓</span><span>${validation.message} → Will convert to letters</span>`;
+                    elements.validationMessage.classList.add('valid-numbers');
+                }
+                elements.convertBtn.disabled = false;
+            } else {
+                elements.inputText.classList.add('invalid');
+                elements.validationMessage.innerHTML = `<span class="icon">⚠️</span><span>${validation.message}</span>`;
+                elements.validationMessage.classList.add('invalid');
+                elements.convertBtn.disabled = true;
+            }
+        }
+        
+        // Update display with conversion results
+        function updateDisplay(input, result, type, conversionTypeText) {
+            // Update conversion info
+            elements.conversionType.textContent = conversionTypeText;
+            elements.conversionDirection.textContent = conversionTypeText;
+            
+            // Update result display
+            elements.convertedResult.textContent = result;
+            state.currentConvertedValue = result;
+            state.originalData = input.toUpperCase();
+            state.convertedData = result;
+            
+            // Calculate base price (UPDATED: Can handle up to 8 digits)
+            let numericForPrice = result;
+            if (type === 'numbers') {
+                numericForPrice = result.split('').map(char => letterToNumber[char] || char).join('').replace(/\D/g, '');
+            }
+            
+            state.currentBasePrice = formatPrice(numericForPrice);
+            state.currentMaxDiscount = parseInt(elements.maxDiscount.value) || 0;
+            
+            // Update displays
+            updateProductLabels();
+            updatePriceDisplay();
+            updateCombinedBarcodeDisplay();
+            
+            // Update barcode displays
+            elements.barcodeInputText.textContent = input.toUpperCase();
+            elements.barcodeResultText.textContent = result;
+            
+            generateBarcode(elements.barcodeInput, input.toUpperCase(), 'original');
+            generateBarcode(elements.barcodeResult, result, 'converted');
+        }
+        
+        // Main conversion function
+        function convertAndCalculate() {
+            const input = elements.inputText.value.trim();
+            const validation = validateInput(input);
+            
+            updateValidationUI(validation);
+            if (!validation.isValid) return;
+            
+            const { result, conversionType } = processConversion(input, validation.type);
+            updateDisplay(input, result, validation.type, conversionType);
+        }
+        
+        // Apply manual discount - FIXED: Now allows any discount up to user-defined max
+        function applyManualDiscount() {
+            let discountValue = parseFloat(elements.discountInput.value);
+            
+            if (isNaN(discountValue) || discountValue < 0 || discountValue > 100) {
+                alert("Please enter a valid discount percentage (0-100)");
+                elements.discountInput.value = '';
+                return;
+            }
+            
+            // Get current max discount from input field
+            const currentMaxDiscount = parseInt(elements.maxDiscount.value) || 0;
+            
+            if (currentMaxDiscount > 0 && discountValue > currentMaxDiscount) {
+                alert(`Discount cannot exceed maximum allowed discount of ${currentMaxDiscount}% (set in Max Discount field)`);
+                discountValue = currentMaxDiscount;
+                elements.discountInput.value = currentMaxDiscount;
+            }
+            
+            state.currentDiscount = discountValue;
+            updatePriceDisplay();
+            elements.discountInput.value = '';
+            updateCombinedBarcodeDisplay();
+        }
+        
+        // Reset discount to 0%
+        function resetDiscount() {
+            state.currentDiscount = 0;
+            updatePriceDisplay();
+            elements.discountInput.value = '';
+            updateCombinedBarcodeDisplay();
+        }
+        
+        // Update max discount - Allows user to set any max discount
+        function updateMaxDiscount() {
+            const newMaxDiscount = parseInt(elements.maxDiscount.value);
+            
+            if (isNaN(newMaxDiscount) || newMaxDiscount < 0 || newMaxDiscount > 100) {
+                alert("Please enter a valid maximum discount (0-100)");
+                elements.maxDiscount.value = state.currentMaxDiscount;
+                return;
+            }
+            
+            state.currentMaxDiscount = newMaxDiscount;
+            
+            if (state.currentDiscount > state.currentMaxDiscount) {
+                state.currentDiscount = state.currentMaxDiscount;
+                alert(`Current discount adjusted to ${state.currentMaxDiscount}% (maximum allowed)`);
+            }
+            
+            updatePriceDisplay();
+            updateCombinedBarcodeDisplay();
+        }
+        
+        // Clear all fields
+        function clearAll() {
+            elements.inputText.value = '';
+            // Reset to PROD + today's date + serial format
+            elements.productNumber.value = getProductNumberWithDateAndSerial();
+            
+            // Reset shop to default (SHOP001) - check if it's a select element or input
+            if (elements.providerShop.tagName === 'SELECT') {
+                elements.providerShop.value = 'SHOP001';
+            } else {
+                // It's an input field (custom shop), so recreate the select
+                const select = document.createElement('select');
+                select.className = 'shop-select';
+                select.id = 'providerShop';
+                select.innerHTML = `
+                    <option value="SHOP001">SHOP001</option>
+                    <option value="IT CARE (PIASH BHI)">IT CARE (PIASH BHI)</option>
+                    <option value="FA COMPUTER (FORHAD BHI)">FA COMPUTER (FORHAD BHI)</option>
+                    <option value="OVO DHAKA">OVO DHAKA</option>
+                    <option value="DHAKA IT HOUSE">DHAKA IT HOUSE</option>
+                    <option value="CUSTOM">Custom Shop Name...</option>
+                `;
+                select.value = 'SHOP001';
+                
+                // Replace the input with select
+                elements.providerShop.parentNode.replaceChild(select, elements.providerShop);
+                
+                // Update the elements reference
+                elements.providerShop = select;
+                
+                // Re-add event listener
+                select.addEventListener('change', handleShopChange);
+            }
+            
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            elements.buyingDate.value = today;
+            
+            elements.maxDiscount.value = '0'; // Reset to default 0%
+            elements.discountInput.value = '';
+            
+            elements.convertedResult.textContent = 'Enter data to convert';
+            elements.conversionType.textContent = 'Letters → Numbers';
+            elements.conversionDirection.textContent = 'Waiting for input';
+            
+            elements.barcodeInputText.textContent = 'Waiting for input';
+            elements.barcodeResultText.textContent = 'Converted data will appear here';
+            elements.combinedBarcodeText.textContent = 'Fill all fields to generate combined barcode';
+            
+            elements.barcodeInput.innerHTML = '';
+            elements.barcodeResult.innerHTML = '';
+            elements.combinedBarcode.innerHTML = '';
+            
+            elements.validationMessage.innerHTML = `<span class="icon">ℹ️</span><span>Enter either all letters (F,G,H,I,J,K,L,M,N,O,X) or all numbers (0-9)</span>`;
+            elements.validationMessage.classList.remove('valid-letters', 'valid-numbers', 'invalid');
+            elements.inputText.classList.remove('valid-letters', 'valid-numbers', 'invalid');
+            
+            // Reset state
+            state.currentDiscount = 0;
+            state.currentConvertedValue = null;
+            state.currentBasePrice = 0;
+            state.currentMaxDiscount = 0; // Reset to default
+            state.currentConversionType = '';
+            state.originalData = '';
+            state.convertedData = '';
+            state.combinedData = '';
+            
+            // Reset displays
+            elements.part1Product.textContent = elements.productNumber.value;
+            elements.part2Price.innerHTML = '<span class="taka-symbol">৳</span>0.00';
+            elements.part3Shop.textContent = 'Not set';
+            elements.part4Date.textContent = 'Not set';
+            elements.part5MaxDiscount.textContent = '0%';
+            
+            // Reset product labels
+            updateProductLabels();
+            
+            // Disable export buttons
+            elements.exportOriginalBtn.disabled = true;
+            elements.exportConvertedBtn.disabled = true;
+            elements.exportCombinedBtn.disabled = true;
+            
+            updatePriceDisplay();
+            elements.convertBtn.disabled = true;
+            
+            // Add blinking effect to main input field
+            elements.inputText.classList.add('required-field');
+            setTimeout(() => {
+                elements.inputText.focus();
+            }, 100);
+        }
+        
+        // Event Listeners
+        function setupEventListeners() {
+            let conversionTimeout;
+            
+            elements.inputText.addEventListener('input', function() {
+                const input = this.value.trim();
+                clearTimeout(conversionTimeout);
+                
+                if (!input) {
+                    elements.convertBtn.disabled = true;
+                    return;
+                }
+                
+                const validation = validateInput(input);
+                updateValidationUI(validation);
+                
+                if (validation.isValid) {
+                    conversionTimeout = setTimeout(convertAndCalculate, 400);
+                }
+            });
+            
+            // Shop selection change handler
+            elements.providerShop.addEventListener('change', handleShopChange);
+            
+            // Update on field changes
+            [elements.productNumber, elements.buyingDate].forEach(el => {
+                el.addEventListener('input', () => {
+                    updateProductLabels();
+                    if (state.currentConvertedValue) {
+                        updateCombinedBarcodeDisplay();
+                    }
+                });
+            });
+            
+            // For custom shop input (if it exists as input, not select)
+            if (elements.providerShop.tagName === 'INPUT') {
+                elements.providerShop.addEventListener('input', () => {
+                    updateProductLabels();
+                    if (state.currentConvertedValue) {
+                        updateCombinedBarcodeDisplay();
+                    }
+                });
+            }
+            
+            elements.maxDiscount.addEventListener('change', updateMaxDiscount);
+            elements.maxDiscount.addEventListener('blur', updateMaxDiscount);
+            
+            // Button events
+            elements.convertBtn.addEventListener('click', convertAndCalculate);
+            elements.clearBtn.addEventListener('click', clearAll);
+            elements.applyDiscountBtn.addEventListener('click', applyManualDiscount);
+            elements.resetDiscountBtn.addEventListener('click', resetDiscount);
+            
+            // Export button events with date-time and product number BELOW barcode
+            elements.exportOriginalBtn.addEventListener('click', () => {
+                const productNumber = elements.productNumber.value || 'PRODUCT';
+                const originalData = state.originalData || 'ORIGINAL';
+                const fileName = `${productNumber}_${originalData}_Original_Barcode`;
+                exportSVG(elements.barcodeInput, fileName, 'original');
+            });
+            
+            elements.exportConvertedBtn.addEventListener('click', () => {
+                const productNumber = elements.productNumber.value || 'PRODUCT';
+                const convertedData = state.convertedData || 'CONVERTED';
+                const fileName = `${productNumber}_${convertedData}_Converted_Barcode`;
+                exportSVG(elements.barcodeResult, fileName, 'converted');
+            });
+            
+            elements.exportCombinedBtn.addEventListener('click', () => {
+                const productNumber = elements.productNumber.value || 'PRODUCT';
+                const fileName = `${productNumber}_Combined_Barcode`;
+                exportSVG(elements.combinedBarcode, fileName, 'combined');
+            });
+            
+            // Enter key support
+            elements.discountInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') applyManualDiscount();
+            });
+            
+            elements.maxDiscount.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') updateMaxDiscount();
+            });
+            
+            elements.inputText.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !elements.convertBtn.disabled) {
+                    convertAndCalculate();
+                }
+            });
+            
+            // Highlight input field on focus
+            elements.inputText.addEventListener('focus', function() {
+                this.classList.add('required-field');
+            });
+            
+            elements.inputText.addEventListener('blur', function() {
+                if (this.value.trim() !== '') {
+                    this.classList.remove('required-field');
+                }
+            });
+        }
+        
+        // Initialize application
+        function init() {
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            elements.buyingDate.value = today;
+            
+            // Set default product number with today's date and serial
+            elements.productNumber.value = getProductNumberWithDateAndSerial();
+            
+            // Set default max discount to 0
+            elements.maxDiscount.value = '0';
+            state.currentMaxDiscount = 0;
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Update product labels
+            updateProductLabels();
+            
+            // Auto-focus and load example
+            setTimeout(() => {
+                elements.inputText.classList.add('required-field');
+                elements.inputText.focus();
+                
+                // Load example
+                elements.inputText.value = 'FGH';
+                convertAndCalculate();
+                
+                // Remove blinking effect after conversion
+                setTimeout(() => {
+                    elements.inputText.classList.remove('required-field');
+                }, 2000);
+            }, 300);
+        }
+        
+        // Start the application
+        document.addEventListener('DOMContentLoaded', init);
+        
+        // Disable right-click context menu on the entire page
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    </script>
+</body>
+</html>
