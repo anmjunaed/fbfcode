@@ -1345,7 +1345,7 @@
                                     <span>Export Combined Barcode</span>
                                     <span>💾</span>
                                 </button>
-                                <div class="format-info">Format: PRODUCT**PRICE**SHOP**DATE**MAXDISCOUNT</div>
+                                <div class="format-info">Format: PRODUCT**PRICE_LETTERS**SHOP**DATE**MAXDISCOUNT</div>
                             </div>
                         </div>
                     </div>
@@ -1438,6 +1438,15 @@
             return result;
         }
         
+        // NEW FUNCTION: Convert price to letters for barcode
+        function convertPriceToLetters(priceNumber) {
+            // Remove any commas and convert to string
+            const priceStr = priceNumber.toString().replace(/,/g, '').replace('৳', '').replace('.00', '');
+            
+            // Convert the numeric price to letters
+            return convertNumbersToLettersWithAlternatingZeros(priceStr);
+        }
+        
         // DOM Elements
         const elements = {
             inputText: document.getElementById('inputText'),
@@ -1493,7 +1502,8 @@
             currentConversionType: '',
             originalData: '',
             convertedData: '',
-            combinedData: ''
+            combinedData: '',
+            priceInLetters: '' // NEW: Store price in letter format
         };
         
         // Function to get formatted date for product number (PROD_YYYYMMDD_001|)
@@ -1711,11 +1721,11 @@
             URL.revokeObjectURL(url);
         }
         
-        // Create combined barcode string (5 parts) - UPDATED: Remove ৳ symbol from barcode
+        // Create combined barcode string (5 parts) - UPDATED: Now uses LETTERS for price
         function createCombinedBarcodeString(productNum, price, shop, date, maxDiscount) {
             const formattedProduct = productNum || 'NOPROD';
-            // Remove ৳ symbol and keep only the numeric value
-            const formattedPrice = price.replace('৳', '').replace(',', '').replace('.00', '');
+            // Convert price to letters instead of numbers
+            const formattedPrice = convertPriceToLetters(price);
             const formattedShop = shop || 'NOSHOP';
             const formattedDate = formatDateForBarcode(date);
             const formattedMaxDiscount = maxDiscount.replace('%', '');
@@ -1766,6 +1776,9 @@
             
             // Update part2Price in combined barcode section
             elements.part2Price.innerHTML = `<span class="taka-symbol">৳</span>${prices.basePrice}`;
+            
+            // Store price in letters for combined barcode
+            state.priceInLetters = convertPriceToLetters(`৳${prices.basePrice}`);
         }
         
         // Update product labels in UI
@@ -2055,6 +2068,7 @@
             state.originalData = '';
             state.convertedData = '';
             state.combinedData = '';
+            state.priceInLetters = '';
             
             // Reset displays
             elements.part1Product.textContent = elements.productNumber.value;
