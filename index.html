@@ -451,6 +451,12 @@
             margin-right: 2px;
         }
         
+        /* NEW: Format for Indian/Bangladeshi number system */
+        .price-with-commas {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+        }
+        
         .discount-inputs {
             background: white;
             border-radius: 10px;
@@ -612,7 +618,6 @@
             background: #f8fafc;
             padding: 10px;
             border-radius: 8px;
-            letter-spacing: 1px;
             border: 1px solid #e2e8f0;
             font-family: 'Courier New', monospace;
             min-height: 60px;
@@ -1178,7 +1183,7 @@
                     <div class="price-grid">
                         <div class="price-result">
                             <div class="price-label">Base Price</div>
-                            <div id="basePrice" class="price-value"><span class="taka-symbol">৳</span>0.00</div>
+                            <div id="basePrice" class="price-value price-with-commas"><span class="taka-symbol">৳</span>0.00</div>
                         </div>
                         
                         <div class="price-result">
@@ -1188,12 +1193,12 @@
                         
                         <div class="price-result">
                             <div class="price-label">Discount Amount</div>
-                            <div id="discountAmount" class="price-value"><span class="taka-symbol">৳</span>0.00</div>
+                            <div id="discountAmount" class="price-value price-with-commas"><span class="taka-symbol">৳</span>0.00</div>
                         </div>
                         
                         <div class="price-result">
                             <div class="price-label">Final Price</div>
-                            <div id="finalPrice" class="price-value"><span class="taka-symbol">৳</span>0.00</div>
+                            <div id="finalPrice" class="price-value price-with-commas"><span class="taka-symbol">৳</span>0.00</div>
                         </div>
                     </div>
                     
@@ -1298,7 +1303,7 @@
                                         <span>2️⃣</span>
                                         <span>Price</span>
                                     </div>
-                                    <div id="part2Price" class="part-value"><span class="taka-symbol">৳</span>0.00</div>
+                                    <div id="part2Price" class="part-value price-with-commas"><span class="taka-symbol">৳</span>0.00</div>
                                 </div>
                                 
                                 <div class="part-item">
@@ -1360,10 +1365,78 @@
             'K': '6', 'L': '7', 'M': '8', 'N': '9', 'O': '0', 'X': '0'
         };
         
+        // Normal number to letter mapping (for single digits)
         const numberToLetter = {
             '1': 'F', '2': 'G', '3': 'H', '4': 'I', '5': 'J',
             '6': 'K', '7': 'L', '8': 'M', '9': 'N', '0': 'X'
         };
+        
+        // NEW FUNCTION: Format number with Indian/Bangladeshi comma separators
+        function formatIndianNumber(number) {
+            // Convert to string and remove any existing commas
+            let numStr = number.toString().replace(/,/g, '');
+            
+            // Handle decimal numbers
+            let parts = numStr.split('.');
+            let integerPart = parts[0];
+            let decimalPart = parts.length > 1 ? '.' + parts[1] : '';
+            
+            // Apply Indian numbering system: 1,00,00,000 format
+            let lastThree = integerPart.substring(integerPart.length - 3);
+            let otherNumbers = integerPart.substring(0, integerPart.length - 3);
+            
+            if (otherNumbers !== '') {
+                // Add comma after every 2 digits from right (except the first 3)
+                let result = '';
+                let count = 0;
+                
+                // Process from right to left
+                for (let i = otherNumbers.length - 1; i >= 0; i--) {
+                    result = otherNumbers[i] + result;
+                    count++;
+                    if (count === 2 && i !== 0) {
+                        result = ',' + result;
+                        count = 0;
+                    }
+                }
+                
+                return result + ',' + lastThree + decimalPart;
+            }
+            
+            return lastThree + decimalPart;
+        }
+        
+        // NEW FUNCTION: Convert numbers to letters with ALTERNATING O/X for consecutive zeros
+        function convertNumbersToLettersWithAlternatingZeros(numberString) {
+            let result = '';
+            let zeroSequenceCount = 0; // Counts consecutive zeros
+            
+            for (let i = 0; i < numberString.length; i++) {
+                const char = numberString[i];
+                
+                if (char === '0') {
+                    zeroSequenceCount++; // Increment for each consecutive zero
+                    
+                    // Alternating pattern based on position in zero sequence
+                    // First zero: O (position 1, odd = O)
+                    // Second zero: X (position 2, even = X)
+                    // Third zero: O (position 3, odd = O)
+                    // Fourth zero: X (position 4, even = X)
+                    if (zeroSequenceCount % 2 === 1) {
+                        result += 'O'; // Odd positions in zero sequence: 1st, 3rd, 5th...
+                    } else {
+                        result += 'X'; // Even positions in zero sequence: 2nd, 4th, 6th...
+                    }
+                } else {
+                    // Reset zero sequence count when we encounter a non-zero
+                    zeroSequenceCount = 0;
+                    // Convert other numbers normally
+                    result += numberToLetter[char] || char;
+                }
+            }
+            
+            return result;
+        }
         
         // DOM Elements
         const elements = {
@@ -1534,9 +1607,9 @@
                 result = upperInput.split('').map(char => letterToNumber[char] || char).join('');
                 conversionType = 'Letters → Numbers';
             } else {
-                // Convert numbers to letters
-                result = upperInput.split('').map(char => numberToLetter[char] || char).join('');
-                conversionType = 'Numbers → Letters';
+                // Convert numbers to letters with alternating O/X for consecutive zeros
+                result = convertNumbersToLettersWithAlternatingZeros(upperInput);
+                conversionType = 'Numbers → Letters (Alternating O/X for zeros)';
             }
             
             return { result, conversionType };
@@ -1642,7 +1715,7 @@
         function createCombinedBarcodeString(productNum, price, shop, date, maxDiscount) {
             const formattedProduct = productNum || 'NOPROD';
             // Remove ৳ symbol and keep only the numeric value
-            const formattedPrice = price.replace('৳', '').replace('.00', '');
+            const formattedPrice = price.replace('৳', '').replace(',', '').replace('.00', '');
             const formattedShop = shop || 'NOSHOP';
             const formattedDate = formatDateForBarcode(date);
             const formattedMaxDiscount = maxDiscount.replace('%', '');
@@ -1650,33 +1723,42 @@
             return `${formattedProduct}**${formattedPrice}**${formattedShop}**${formattedDate}**${formattedMaxDiscount}`;
         }
         
-        // Calculate prices - UPDATED: Format with ৳ symbol
+        // Calculate prices - UPDATED: Format with ৳ symbol and Indian commas
         function calculatePrices(basePrice, discountPercent) {
             const discountAmount = (basePrice * discountPercent) / 100;
             const finalPrice = basePrice - discountAmount;
             
+            // Format with Indian comma separators
+            const baseFormatted = formatIndianNumber(basePrice.toFixed(2));
+            const discountFormatted = formatIndianNumber(discountAmount.toFixed(2));
+            const finalFormatted = formatIndianNumber(finalPrice.toFixed(2));
+            
             return {
-                basePrice: basePrice.toFixed(2),
+                basePrice: baseFormatted,
                 discountPercent: discountPercent.toFixed(0),
-                discountAmount: discountAmount.toFixed(2),
-                finalPrice: finalPrice.toFixed(2)
+                discountAmount: discountFormatted,
+                finalPrice: finalFormatted,
+                rawBase: basePrice.toFixed(2),
+                rawDiscount: discountAmount.toFixed(2),
+                rawFinal: finalPrice.toFixed(2)
             };
         }
         
-        // Update price display - UPDATED: Show ৳ symbol
+        // Update price display - UPDATED: Show ৳ symbol with Indian commas
         function updatePriceDisplay() {
             const prices = calculatePrices(state.currentBasePrice, state.currentDiscount);
             
-            // Update with ৳ symbol
+            // Update with ৳ symbol and Indian comma formatting
             elements.basePriceElement.innerHTML = `<span class="taka-symbol">৳</span>${prices.basePrice}`;
             elements.discountPercentElement.textContent = `${prices.discountPercent}%`;
             elements.discountAmountElement.innerHTML = `<span class="taka-symbol">৳</span>${prices.discountAmount}`;
             elements.finalPriceElement.innerHTML = `<span class="taka-symbol">৳</span>${prices.finalPrice}`;
             
-            // Update info text
+            // Update info text with formatted number
             if (state.currentConvertedValue) {
                 const numericValue = parseInt(state.currentConvertedValue) || 0;
-                elements.priceSource.textContent = `💰 Price calculated from converted value: ${numericValue}`;
+                const formattedNumeric = formatIndianNumber(numericValue);
+                elements.priceSource.textContent = `💰 Price calculated from converted value: ${formattedNumeric}`;
                 elements.discountNote.innerHTML = `🎯 Current discount: <strong>${state.currentDiscount}%</strong> ${state.currentDiscount === 0 ? '(default)' : ''}`;
             }
             
@@ -1790,7 +1872,7 @@
                     elements.validationMessage.classList.add('valid-letters');
                 } else {
                     elements.inputText.classList.add('valid-numbers');
-                    elements.validationMessage.innerHTML = `<span class="icon">✓</span><span>${validation.message} → Will convert to letters</span>`;
+                    elements.validationMessage.innerHTML = `<span class="icon">✓</span><span>${validation.message} → Will convert to letters (with alternating O/X for zeros)</span>`;
                     elements.validationMessage.classList.add('valid-numbers');
                 }
                 elements.convertBtn.disabled = false;
@@ -1817,6 +1899,11 @@
             // Calculate base price (UPDATED: Can handle up to 8 digits)
             let numericForPrice = result;
             if (type === 'numbers') {
+                // For numbers to letters conversion, we need to convert back to get the price
+                // But we should use the original input for price calculation
+                numericForPrice = input.replace(/\D/g, '');
+            } else {
+                // For letters to numbers, convert letters to numbers for price
                 numericForPrice = result.split('').map(char => letterToNumber[char] || char).join('').replace(/\D/g, '');
             }
             
@@ -2114,12 +2201,12 @@
             // Update product labels
             updateProductLabels();
             
-            // Auto-focus and load example
+            // Auto-focus and load example (CHANGED BACK TO FGH)
             setTimeout(() => {
                 elements.inputText.classList.add('required-field');
                 elements.inputText.focus();
                 
-                // Load example
+                // Load example with FGH (changed from 80000)
                 elements.inputText.value = 'FGH';
                 convertAndCalculate();
                 
